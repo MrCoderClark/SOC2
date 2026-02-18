@@ -1,0 +1,107 @@
+# GitHub Labels Configuration
+# Use with: https://github.com/marketplace/actions/github-labeler
+
+# Priority Labels
+- name: "priority: critical"
+  color: "b60205"
+  description: "Blocks release, must be fixed immediately"
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: "Core feature, high importance"
+
+- name: "priority: medium"
+  color: "fbca04"
+  description: "Important but not blocking"
+
+- name: "priority: low"
+  color: "0e8a16"
+  description: "Nice to have"
+
+# Type Labels
+- name: "type: feature"
+  color: "1d76db"
+  description: "New feature or enhancement"
+
+- name: "type: bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "type: task"
+  color: "6f42c1"
+  description: "Development task"
+
+- name: "type: docs"
+  color: "0075ca"
+  description: "Documentation improvements"
+
+- name: "type: refactor"
+  color: "fef2c0"
+  description: "Code refactoring"
+
+- name: "type: test"
+  color: "bfd4f2"
+  description: "Testing related"
+
+# Component Labels
+- name: "component: frontend"
+  color: "c5def5"
+  description: "Frontend/UI related"
+
+- name: "component: backend"
+  color: "bfdadc"
+  description: "Backend/API related"
+
+- name: "component: database"
+  color: "d4c5f9"
+  description: "Database related"
+
+- name: "component: integrations"
+  color: "f9d0c4"
+  description: "Third-party integrations"
+
+- name: "component: ai"
+  color: "e99695"
+  description: "AI/ML features"
+
+- name: "component: auth"
+  color: "c2e0c6"
+  description: "Authentication/Authorization"
+
+# Phase Labels (Milestones)
+- name: "phase: 1-foundation"
+  color: "5319e7"
+  description: "Phase 1: Foundation & Core Setup"
+
+- name: "phase: 2-core"
+  color: "5319e7"
+  description: "Phase 2: Core Compliance Features"
+
+- name: "phase: 3-integrations"
+  color: "5319e7"
+  description: "Phase 3: Integrations & Automation"
+
+- name: "phase: 4-ai"
+  color: "5319e7"
+  description: "Phase 4: AI Features"
+
+- name: "phase: 5-enterprise"
+  color: "5319e7"
+  description: "Phase 5: Enterprise & Scale"
+
+# Status Labels
+- name: "status: blocked"
+  color: "b60205"
+  description: "Blocked by another issue"
+
+- name: "status: in-progress"
+  color: "fbca04"
+  description: "Currently being worked on"
+
+- name: "status: review"
+  color: "0e8a16"
+  description: "Ready for review"
+
+- name: "status: ready"
+  color: "c2e0c6"
+  description: "Ready to be worked on"
