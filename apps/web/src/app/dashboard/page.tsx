@@ -1,109 +1,156 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileCheck, FileText, FolderOpen, AlertTriangle } from "lucide-react"
-
-const stats = [
-  {
-    name: "Total Controls",
-    value: "0",
-    description: "SOC 2 controls tracked",
-    icon: FileCheck,
-  },
-  {
-    name: "Policies",
-    value: "0",
-    description: "Active policies",
-    icon: FileText,
-  },
-  {
-    name: "Evidence",
-    value: "0",
-    description: "Evidence items collected",
-    icon: FolderOpen,
-  },
-  {
-    name: "Action Items",
-    value: "0",
-    description: "Pending tasks",
-    icon: AlertTriangle,
-  },
-]
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileCheck, FileText, FolderOpen, Users, Shield, Link2 } from "lucide-react"
 
 export default function DashboardPage() {
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Welcome to your SOC 2 compliance dashboard
-        </p>
+        <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.name}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
+      {/* Frameworks Section */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">Frameworks</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground">SOC 2 Type II</h3>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-sm text-muted-foreground">0 of 82 controls</span>
+                    <span className="text-sm font-medium text-primary">0%</span>
+                  </div>
+                  <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: "0%" }} />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Getting Started</CardTitle>
-            <CardDescription>Complete these steps to set up your compliance program</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <Card className="shadow-sm hover:shadow-md transition-shadow border-dashed opacity-60">
+            <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-muted-foreground">HIPAA</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Coming soon</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Overview Section */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">Overview</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <span className="font-semibold text-foreground">Team</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-foreground">0%</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">0/0 members complete</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Link2 className="h-5 w-5 text-primary" />
+                </div>
+                <span className="font-semibold text-foreground">Tech</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-foreground">0%</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">0/0 integrations compliant</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <FileCheck className="h-5 w-5 text-primary" />
+                </div>
+                <span className="font-semibold text-foreground">Controls</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-foreground">0%</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">0 of 82 controls</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-primary" />
+                </div>
+                <span className="font-semibold text-foreground">Policies</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-foreground">0</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">Active policies</p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Getting Started Section */}
+      <section>
+        <h2 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">Getting Started</h2>
+        <Card className="shadow-sm">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
                   1
                 </div>
-                <div>
-                  <p className="font-medium">Configure your organization</p>
-                  <p className="text-sm text-muted-foreground">Set up your company profile and team</p>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">Configure your organization</p>
+                  <p className="text-sm text-muted-foreground">Set up your company profile and invite team members</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+              <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="h-10 w-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-sm font-semibold">
                   2
                 </div>
-                <div>
-                  <p className="font-medium">Connect integrations</p>
-                  <p className="text-sm text-muted-foreground">Link AWS, GitHub, and other services</p>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">Connect integrations</p>
+                  <p className="text-sm text-muted-foreground">Link AWS, GitHub, Slack and other services</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+              <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="h-10 w-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-sm font-semibold">
                   3
                 </div>
-                <div>
-                  <p className="font-medium">Review SOC 2 controls</p>
-                  <p className="text-sm text-muted-foreground">Map controls to your organization</p>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">Review SOC 2 controls</p>
+                  <p className="text-sm text-muted-foreground">Map controls to your organization's processes</p>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest updates from your team</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground text-center py-8">
-              No recent activity
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      </section>
     </div>
   )
 }
