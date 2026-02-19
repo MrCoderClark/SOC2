@@ -30,7 +30,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
-        run: pnpm --filter @soc2/database prisma generate
+        run: pnpm --filter @soc2/database db:generate
 
       - name: Type check
         run: pnpm type-check
@@ -62,7 +62,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
-        run: pnpm --filter @soc2/database prisma generate
+        run: pnpm --filter @soc2/database db:generate
 
       - name: Build
         run: pnpm build
