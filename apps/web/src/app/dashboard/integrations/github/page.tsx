@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,7 +47,7 @@ type ComplianceSummary = {
   needsAttention: number
 }
 
-export default function GitHubIntegrationPage() {
+function GitHubIntegrationContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
@@ -373,5 +373,17 @@ export default function GitHubIntegrationPage() {
         </>
       )}
     </div>
+  )
+}
+
+export default function GitHubIntegrationPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-8 max-w-5xl mx-auto">
+        <div className="text-center py-12 text-muted-foreground">Loading GitHub integration...</div>
+      </div>
+    }>
+      <GitHubIntegrationContent />
+    </Suspense>
   )
 }
