@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-
-export const dynamic = 'force-dynamic'
 import { getServerSession } from "next-auth"
 import { prisma } from "@soc2/database"
 import { authOptions } from "@/lib/auth"
 import { Role, getPermissions } from "@/lib/permissions"
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {

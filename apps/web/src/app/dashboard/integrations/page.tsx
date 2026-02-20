@@ -11,9 +11,11 @@ import {
   AlertCircle,
   Settings,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  ExternalLink
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
 type Integration = {
   id: string
@@ -66,6 +68,21 @@ export default function IntegrationsPage() {
   }
 
   const handleAddIntegration = async (type: string) => {
+    // Handle OAuth-based integrations
+    if (type === "GITHUB") {
+      try {
+        const res = await fetch("/api/integrations/github/connect")
+        if (res.ok) {
+          const data = await res.json()
+          window.location.href = data.url
+        }
+      } catch (error) {
+        console.error("Failed to connect GitHub:", error)
+      }
+      return
+    }
+
+    // Handle other integrations
     const typeInfo = integrationTypes.find(t => t.type === type)
     if (!typeInfo) return
 
@@ -192,6 +209,13 @@ export default function IntegrationsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
+                        {integration.type === "GITHUB" && integration.status === "ACTIVE" && (
+                          <Link href="/dashboard/integrations/github">
+                            <Button variant="ghost" size="sm" title="View Details">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"

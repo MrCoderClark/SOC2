@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-
-export const dynamic = 'force-dynamic'
 import { getServerSession } from "next-auth"
 import { prisma } from "@soc2/database"
 import { authOptions } from "@/lib/auth"
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
@@ -73,38 +73,54 @@ export async function GET(request: Request) {
       }),
     ])
 
-    const totalControls = controlStats.reduce((sum, s) => sum + s._count, 0)
-    const totalPolicies = policyStats.reduce((sum, s) => sum + s._count, 0)
-    const totalEvidence = evidenceStats.reduce((sum, s) => sum + s._count, 0)
+    type GroupByResult = { status: string; _count: { _all: number } | number }
+    
+    const getCount = (item: GroupByResult) => {
+      if (typeof item._count === 'number') return item._count
+      return item._count._all || 0
+    }
+    
+    const totalControls = controlStats.reduce((sum: number, s: GroupByResult) => sum + getCount(s), 0)
+    const totalPolicies = policyStats.reduce((sum: number, s: GroupByResult) => sum + getCount(s), 0)
+    const totalEvidence = evidenceStats.reduce((sum: number, s: GroupByResult) => sum + getCount(s), 0)
 
-    const implementedControls = controlStats.find(s => s.status === "IMPLEMENTED")?._count || 0
-    const approvedPolicies = policyStats.find(s => s.status === "APPROVED")?._count || 0
-    const approvedEvidence = evidenceStats.find(s => s.status === "APPROVED")?._count || 0
+    const implementedControls = controlStats.find((s: GroupByResult) => s.status === "IMPLEMENTED")
+    const approvedPolicies = policyStats.find((s: GroupByResult) => s.status === "APPROVED")
+    const approvedEvidence = evidenceStats.find((s: GroupByResult) => s.status === "APPROVED")
+    
+    const implementedCount = implementedControls ? getCount(implementedControls) : 0
+    const approvedPoliciesCount = approvedPolicies ? getCount(approvedPolicies) : 0
+    const approvedEvidenceCount = approvedEvidence ? getCount(approvedEvidence) : 0
 
     const complianceScore = totalControls > 0 
-      ? Math.round((implementedControls / totalControls) * 100) 
+      ? Math.round((implementedCount / totalControls) * 100) 
       : 0
+
+    const findCount = (arr: GroupByResult[], status: string) => {
+      const item = arr.find((s: GroupByResult) => s.status === status)
+      return item ? getCount(item) : 0
+    }
 
     return NextResponse.json({
       complianceScore,
       controls: {
         total: totalControls,
-        implemented: implementedControls,
-        inProgress: controlStats.find(s => s.status === "IN_PROGRESS")?._count || 0,
-        notStarted: controlStats.find(s => s.status === "NOT_STARTED")?._count || 0,
-        notApplicable: controlStats.find(s => s.status === "NOT_APPLICABLE")?._count || 0,
+        implemented: implementedCount,
+        inProgress: findCount(controlStats, "IN_PROGRESS"),
+        notStarted: findCount(controlStats, "NOT_STARTED"),
+        notApplicable: findCount(controlStats, "NOT_APPLICABLE"),
       },
       policies: {
         total: totalPolicies,
-        approved: approvedPolicies,
-        draft: policyStats.find(s => s.status === "DRAFT")?._count || 0,
-        review: policyStats.find(s => s.status === "REVIEW")?._count || 0,
+        approved: approvedPoliciesCount,
+        draft: findCount(policyStats, "DRAFT"),
+        review: findCount(policyStats, "REVIEW"),
       },
       evidence: {
         total: totalEvidence,
-        approved: approvedEvidence,
-        pending: evidenceStats.find(s => s.status === "PENDING")?._count || 0,
-        rejected: evidenceStats.find(s => s.status === "REJECTED")?._count || 0,
+        approved: approvedEvidenceCount,
+        pending: findCount(evidenceStats, "PENDING"),
+        rejected: findCount(evidenceStats, "REJECTED"),
       },
       recentControls,
       recentEvidence,

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
-
-export const dynamic = 'force-dynamic'
 import { getServerSession } from "next-auth"
 import { prisma } from "@soc2/database"
 import { authOptions } from "@/lib/auth"
 import { getGitHubOAuthUrl } from "@/lib/integrations/github"
 import { randomBytes } from "crypto"
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {

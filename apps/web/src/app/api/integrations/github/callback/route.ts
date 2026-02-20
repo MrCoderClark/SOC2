@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
-
-export const dynamic = 'force-dynamic'
 import { prisma } from "@soc2/database"
 import { exchangeGitHubCode, GitHubClient } from "@/lib/integrations/github"
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
