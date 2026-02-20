@@ -214,7 +214,7 @@ export default function ControlsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-3">
           {filteredControls.map((control) => {
             const statusInfo = statusConfig[control.status as keyof typeof statusConfig]
             const categoryInfo = categoryConfig[control.category as keyof typeof categoryConfig]

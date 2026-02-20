@@ -25,6 +25,7 @@ model Organization {
   audits       Audit[]
   integrations Integration[]
   activityLogs ActivityLog[]
+  alerts       Alert[]
 
   @@map("organizations")
 }
@@ -48,6 +49,8 @@ model User {
   uploadedEvidence Evidence[]
   auditComments    AuditComment[]
   activityLogs     ActivityLog[]
+  acknowledgedAlerts Alert[]      @relation("AlertAcknowledger")
+  resolvedAlerts     Alert[]      @relation("AlertResolver")
 
   @@map("users")
 }
@@ -120,6 +123,7 @@ model Control {
   assignee     User?        @relation("AssignedControls", fields: [assigneeId], references: [id])
   evidence     Evidence[]
   policies     Policy[]     @relation("ControlPolicies")
+  alerts       Alert[]
 
   @@unique([organizationId, code])
   @@map("controls")
@@ -157,6 +161,7 @@ model Policy {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   controls     Control[]    @relation("ControlPolicies")
+  alerts       Alert[]
 
   @@map("policies")
 }
@@ -184,6 +189,7 @@ model Evidence {
   control      Control      @relation(fields: [controlId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+  alerts       Alert[]
 
   @@map("evidence")
 }
@@ -293,4 +299,64 @@ model ActivityLog {
   @@index([organizationId, createdAt])
   @@index([entityType, entityId])
   @@map("activity_logs")
+}
+
+// ============================================
+// COMPLIANCE ALERTS
+// ============================================
+
+model Alert {
+  id             String        @id @default(cuid())
+  type           AlertType
+  severity       AlertSeverity
+  title          String
+  description    String
+  status         AlertStatus   @default(OPEN)
+  controlId      String?
+  evidenceId     String?
+  policyId       String?
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  resolvedBy     String?
+  resolvedAt     DateTime?
+  organizationId String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  control        Control?      @relation(fields: [controlId], references: [id], onDelete: SetNull)
+  evidence       Evidence?     @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  policy         Policy?       @relation(fields: [policyId], references: [id], onDelete: SetNull)
+  acknowledger   User?         @relation("AlertAcknowledger", fields: [acknowledgedBy], references: [id], onDelete: SetNull)
+  resolver       User?         @relation("AlertResolver", fields: [resolvedBy], references: [id], onDelete: SetNull)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@map("alerts")
+}
+
+enum AlertType {
+  CONTROL_NOT_STARTED      // Control has no progress
+  CONTROL_STALE            // Control hasn't been updated in X days
+  EVIDENCE_MISSING         // Control has no evidence
+  EVIDENCE_EXPIRING        // Evidence is about to expire
+  EVIDENCE_EXPIRED         // Evidence has expired
+  EVIDENCE_REJECTED        // Evidence was rejected
+  POLICY_MISSING           // Control has no linked policy
+  POLICY_DRAFT             // Linked policy is still in draft
+  COMPLIANCE_DROP          // Compliance score dropped
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
 }

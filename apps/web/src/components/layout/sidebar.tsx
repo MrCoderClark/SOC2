@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -14,6 +15,7 @@ import {
   Link2,
   LogOut,
   Activity,
+  Bell,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 
@@ -22,6 +24,7 @@ const navigation = [
   { name: "Controls", href: "/dashboard/controls", icon: FileCheck },
   { name: "Policies", href: "/dashboard/policies", icon: FileText },
   { name: "Evidence", href: "/dashboard/evidence", icon: FolderOpen },
+  { name: "Alerts", href: "/dashboard/alerts", icon: Bell, showBadge: true },
   { name: "Activity", href: "/dashboard/activity", icon: Activity },
   { name: "Integrations", href: "/dashboard/integrations", icon: Link2 },
   { name: "Team", href: "/dashboard/team", icon: Users },
@@ -30,6 +33,26 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const [openAlertCount, setOpenAlertCount] = useState(0)
+
+  useEffect(() => {
+    const fetchAlertCount = async () => {
+      try {
+        const res = await fetch("/api/alerts?status=OPEN")
+        if (res.ok) {
+          const alerts = await res.json()
+          setOpenAlertCount(Array.isArray(alerts) ? alerts.length : 0)
+        }
+      } catch (error) {
+        console.error("Failed to fetch alert count:", error)
+      }
+    }
+
+    fetchAlertCount()
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchAlertCount, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="flex h-full w-64 flex-col bg-card border-r shadow-sm">
@@ -42,6 +65,7 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 p-3">
         {navigation.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+          const showBadge = (item as any).showBadge && openAlertCount > 0
           return (
             <Link
               key={item.name}
@@ -54,7 +78,17 @@ export function Sidebar() {
               )}
             >
               <item.icon className="h-4 w-4" />
-              {item.name}
+              <span className="flex-1">{item.name}</span>
+              {showBadge && (
+                <span className={cn(
+                  "min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold flex items-center justify-center",
+                  isActive 
+                    ? "bg-primary-foreground text-primary" 
+                    : "bg-red-500 text-white"
+                )}>
+                  {openAlertCount > 99 ? "99+" : openAlertCount}
+                </span>
+              )}
             </Link>
           )
         })}
