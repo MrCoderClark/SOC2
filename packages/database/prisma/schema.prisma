@@ -26,6 +26,7 @@ model Organization {
   integrations Integration[]
   activityLogs ActivityLog[]
   alerts       Alert[]
+  aiUsage      AIUsage[]
 
   @@map("organizations")
 }
@@ -51,6 +52,7 @@ model User {
   activityLogs     ActivityLog[]
   acknowledgedAlerts Alert[]      @relation("AlertAcknowledger")
   resolvedAlerts     Alert[]      @relation("AlertResolver")
+  aiUsage          AIUsage[]
 
   @@map("users")
 }
@@ -359,4 +361,42 @@ enum AlertStatus {
   ACKNOWLEDGED
   RESOLVED
   DISMISSED
+}
+
+// ============================================
+// AI USAGE TRACKING
+// ============================================
+
+model AIUsage {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  feature        String   // e.g., "policy_generation", "evidence_analysis"
+  model          String   // e.g., "gpt-4o-mini"
+  promptTokens   Int
+  completionTokens Int
+  totalTokens    Int
+  cost           Float?   // Estimated cost in USD
+  cached         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([userId, createdAt])
+  @@map("ai_usage")
+}
+
+model AICache {
+  id           String   @id @default(cuid())
+  promptHash   String   @unique
+  response     String   @db.Text
+  model        String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([promptHash])
+  @@index([expiresAt])
+  @@map("ai_cache")
 }
