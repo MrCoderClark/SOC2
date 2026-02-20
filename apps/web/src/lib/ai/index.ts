@@ -34,10 +34,20 @@ const DEFAULT_CONFIG: AIConfig = {
   temperature: 0.7,
 }
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy-initialize OpenAI client to avoid build errors when API key is not set
+let _openai: OpenAI | null = null
+
+function getOpenAIClient(): OpenAI {
+  if (!_openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured")
+    }
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+  }
+  return _openai
+}
 
 // AI Service class
 export class AIService {
@@ -56,7 +66,7 @@ export class AIService {
 
   private async chatOpenAI(messages: AIMessage[]): Promise<AIResponse> {
     try {
-      const response = await openai.chat.completions.create({
+      const response = await getOpenAIClient().chat.completions.create({
         model: this.config.model,
         messages: messages.map((m) => ({
           role: m.role,
@@ -103,7 +113,7 @@ export class AIService {
       throw new Error("Streaming only supported for OpenAI")
     }
 
-    const stream = await openai.chat.completions.create({
+    const stream = await getOpenAIClient().chat.completions.create({
       model: this.config.model,
       messages: messages.map((m) => ({
         role: m.role,
