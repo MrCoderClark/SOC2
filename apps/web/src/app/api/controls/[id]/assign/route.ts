@@ -5,7 +5,8 @@ import { authOptions } from "@/lib/auth"
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
+// Assign control to current user
+export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
@@ -16,8 +17,11 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const control = await prisma.control.findUnique({
+    const control = await prisma.control.update({
       where: { id: params.id },
+      data: {
+        assigneeId: session.user.id,
+      },
       include: {
         assignee: {
           select: {
@@ -26,38 +30,21 @@ export async function GET(
             email: true,
           },
         },
-        evidence: {
-          include: {
-            uploadedBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-        policies: true,
       },
     })
 
-    if (!control) {
-      return NextResponse.json({ error: "Control not found" }, { status: 404 })
-    }
-
     return NextResponse.json(control)
   } catch (error) {
-    console.error("Error fetching control:", error)
+    console.error("Error assigning control:", error)
     return NextResponse.json(
-      { error: "Failed to fetch control" },
+      { error: "Failed to assign control" },
       { status: 500 }
     )
   }
 }
 
-export async function PATCH(
+// Unassign control
+export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
@@ -68,19 +55,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { status, assigneeId, linkPolicyId } = body
-
     const control = await prisma.control.update({
       where: { id: params.id },
       data: {
-        ...(status && { status }),
-        ...(assigneeId !== undefined && { assigneeId }),
-        ...(linkPolicyId && {
-          policies: {
-            connect: { id: linkPolicyId },
-          },
-        }),
+        assigneeId: null,
       },
       include: {
         assignee: {
@@ -90,21 +68,14 @@ export async function PATCH(
             email: true,
           },
         },
-        policies: {
-          select: {
-            id: true,
-            title: true,
-            status: true,
-          },
-        },
       },
     })
 
     return NextResponse.json(control)
   } catch (error) {
-    console.error("Error updating control:", error)
+    console.error("Error unassigning control:", error)
     return NextResponse.json(
-      { error: "Failed to update control" },
+      { error: "Failed to unassign control" },
       { status: 500 }
     )
   }

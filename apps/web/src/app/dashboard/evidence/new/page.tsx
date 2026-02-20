@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Upload, Shield } from "lucide-react"
+import { ArrowLeft, Upload, FileUp, X, File, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 
 type Control = {
@@ -16,12 +16,16 @@ type Control = {
 
 export default function NewEvidencePage() {
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [controls, setControls] = useState<Control[]>([])
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [controlId, setControlId] = useState("")
   const [fileUrl, setFileUrl] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploadedFileName, setUploadedFileName] = useState("")
 
   useEffect(() => {
     fetchControls()
@@ -34,6 +38,56 @@ export default function NewEvidencePage() {
       setControls(data)
     } catch (error) {
       console.error("Failed to fetch controls:", error)
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      // Auto-fill title if empty
+      if (!title) {
+        setTitle(file.name.replace(/\.[^/.]+$/, ""))
+      }
+    }
+  }
+
+  const handleFileUpload = async () => {
+    if (!selectedFile) return
+    
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+      
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        setFileUrl(data.url)
+        setUploadedFileName(selectedFile.name)
+        setSelectedFile(null)
+      } else {
+        const error = await res.json()
+        alert(error.error || "Upload failed")
+      }
+    } catch (error) {
+      console.error("Failed to upload file:", error)
+      alert("Failed to upload file")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const removeFile = () => {
+    setSelectedFile(null)
+    setFileUrl("")
+    setUploadedFileName("")
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
@@ -125,15 +179,90 @@ export default function NewEvidencePage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">File URL (optional)</label>
+              <label className="text-sm font-medium mb-2 block">Upload File</label>
+              
+              {/* File upload area */}
+              {!fileUrl && !selectedFile && (
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                >
+                  <FileUp className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-sm font-medium">Click to upload a file</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PDF, Word, Excel, Images, CSV (max 10MB)
+                  </p>
+                </div>
+              )}
+              
+              {/* Selected file - ready to upload */}
+              {selectedFile && !fileUrl && (
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <File className="h-8 w-8 text-blue-600" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{selectedFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(selectedFile.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      onClick={handleFileUpload}
+                      disabled={uploading}
+                    >
+                      {uploading ? "Uploading..." : "Upload"}
+                    </Button>
+                    <button 
+                      type="button"
+                      onClick={removeFile}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Uploaded file - success */}
+              {fileUrl && (
+                <div className="border border-green-200 bg-green-50 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-8 w-8 text-green-600" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{uploadedFileName}</p>
+                      <p className="text-xs text-green-600">File uploaded successfully</p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={removeFile}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.csv,.txt"
+                className="hidden"
+              />
+              
+              <p className="text-xs text-muted-foreground mt-2">
+                Or paste a link to external file (Google Drive, SharePoint, etc.)
+              </p>
               <Input
                 value={fileUrl}
                 onChange={(e) => setFileUrl(e.target.value)}
                 placeholder="https://..."
+                className="mt-2"
+                disabled={!!uploadedFileName}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Link to the evidence file (Google Drive, SharePoint, etc.)
-              </p>
             </div>
 
             <div className="flex gap-3 pt-4">

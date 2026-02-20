@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { 
   Shield, 
   ArrowLeft,
@@ -13,7 +14,11 @@ import {
   XCircle,
   FileText,
   FolderOpen,
-  User
+  User,
+  X,
+  Plus,
+  UserPlus,
+  UserMinus
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -69,6 +74,21 @@ export default function ControlDetailPage() {
   const [control, setControl] = useState<Control | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  
+  // Evidence modal state
+  const [showEvidenceModal, setShowEvidenceModal] = useState(false)
+  const [evidenceTitle, setEvidenceTitle] = useState("")
+  const [evidenceDescription, setEvidenceDescription] = useState("")
+  const [savingEvidence, setSavingEvidence] = useState(false)
+  
+  // Policy modal state
+  const [showPolicyModal, setShowPolicyModal] = useState(false)
+  const [availablePolicies, setAvailablePolicies] = useState<Array<{ id: string; title: string; status: string }>>([])
+  const [selectedPolicyId, setSelectedPolicyId] = useState("")
+  const [linkingPolicy, setLinkingPolicy] = useState(false)
+  
+  // Assignee state
+  const [assigning, setAssigning] = useState(false)
 
   useEffect(() => {
     fetchControl()
@@ -104,6 +124,108 @@ export default function ControlDetailPage() {
       console.error("Failed to update status:", error)
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleAddEvidence = async () => {
+    if (!control || !evidenceTitle.trim()) return
+    setSavingEvidence(true)
+    try {
+      const res = await fetch("/api/evidence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: evidenceTitle.trim(),
+          description: evidenceDescription.trim(),
+          controlId: control.id,
+        }),
+      })
+      if (res.ok) {
+        const newEvidence = await res.json()
+        setControl({
+          ...control,
+          evidence: [newEvidence, ...control.evidence],
+        })
+        setShowEvidenceModal(false)
+        setEvidenceTitle("")
+        setEvidenceDescription("")
+      }
+    } catch (error) {
+      console.error("Failed to add evidence:", error)
+    } finally {
+      setSavingEvidence(false)
+    }
+  }
+
+  const openPolicyModal = async () => {
+    setShowPolicyModal(true)
+    try {
+      const res = await fetch("/api/policies")
+      if (res.ok) {
+        const policies = await res.json()
+        // Filter out already linked policies
+        const linkedIds = control?.policies.map(p => p.id) || []
+        setAvailablePolicies(policies.filter((p: any) => !linkedIds.includes(p.id)))
+      }
+    } catch (error) {
+      console.error("Failed to fetch policies:", error)
+    }
+  }
+
+  const handleLinkPolicy = async () => {
+    if (!control || !selectedPolicyId) return
+    setLinkingPolicy(true)
+    try {
+      const res = await fetch(`/api/controls/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkPolicyId: selectedPolicyId }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setControl({ ...control, policies: updated.policies })
+        setShowPolicyModal(false)
+        setSelectedPolicyId("")
+      }
+    } catch (error) {
+      console.error("Failed to link policy:", error)
+    } finally {
+      setLinkingPolicy(false)
+    }
+  }
+
+  const handleAssignToMe = async () => {
+    if (!control) return
+    setAssigning(true)
+    try {
+      const res = await fetch(`/api/controls/${params.id}/assign`, {
+        method: "POST",
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setControl({ ...control, assignee: updated.assignee })
+      }
+    } catch (error) {
+      console.error("Failed to assign control:", error)
+    } finally {
+      setAssigning(false)
+    }
+  }
+
+  const handleUnassign = async () => {
+    if (!control) return
+    setAssigning(true)
+    try {
+      const res = await fetch(`/api/controls/${params.id}/assign`, {
+        method: "DELETE",
+      })
+      if (res.ok) {
+        setControl({ ...control, assignee: undefined })
+      }
+    } catch (error) {
+      console.error("Failed to unassign control:", error)
+    } finally {
+      setAssigning(false)
     }
   }
 
@@ -198,8 +320,8 @@ export default function ControlDetailPage() {
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Evidence</CardTitle>
-              <Button size="sm" variant="outline">
-                <FolderOpen className="h-4 w-4 mr-2" />
+              <Button size="sm" variant="outline" onClick={() => setShowEvidenceModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
                 Add Evidence
               </Button>
             </CardHeader>
@@ -231,8 +353,8 @@ export default function ControlDetailPage() {
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Linked Policies</CardTitle>
-              <Button size="sm" variant="outline">
-                <FileText className="h-4 w-4 mr-2" />
+              <Button size="sm" variant="outline" onClick={openPolicyModal}>
+                <Plus className="h-4 w-4 mr-2" />
                 Link Policy
               </Button>
             </CardHeader>
@@ -267,13 +389,38 @@ export default function ControlDetailPage() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground">Assignee</p>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-2">
                   <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                     <User className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium flex-1">
                     {control.assignee?.name || "Unassigned"}
                   </span>
+                </div>
+                <div className="mt-3">
+                  {control.assignee ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={handleUnassign}
+                      disabled={assigning}
+                    >
+                      <UserMinus className="h-4 w-4 mr-2" />
+                      {assigning ? "Updating..." : "Unassign"}
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={handleAssignToMe}
+                      disabled={assigning}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      {assigning ? "Assigning..." : "Assign to Me"}
+                    </Button>
+                  )}
                 </div>
               </div>
               <div>
@@ -292,6 +439,123 @@ export default function ControlDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Add Evidence Modal */}
+      {showEvidenceModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-semibold">Add Evidence</h3>
+              <button 
+                onClick={() => setShowEvidenceModal(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Title *</label>
+                <Input
+                  value={evidenceTitle}
+                  onChange={(e) => setEvidenceTitle(e.target.value)}
+                  placeholder="e.g., User provisioning ticket #1234"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <textarea
+                  value={evidenceDescription}
+                  onChange={(e) => setEvidenceDescription(e.target.value)}
+                  placeholder="Describe the evidence..."
+                  className="w-full px-3 py-2 border rounded-md text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Evidence for: <strong>{control?.code}</strong> - {control?.name}
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 p-4 border-t">
+              <Button variant="outline" onClick={() => setShowEvidenceModal(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddEvidence} 
+                disabled={!evidenceTitle.trim() || savingEvidence}
+              >
+                {savingEvidence ? "Saving..." : "Add Evidence"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Link Policy Modal */}
+      {showPolicyModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-semibold">Link Policy</h3>
+              <button 
+                onClick={() => setShowPolicyModal(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {availablePolicies.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No policies available to link.</p>
+                  <Link href="/dashboard/policies">
+                    <Button variant="link" size="sm">Create a policy first</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Select Policy</label>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {availablePolicies.map((policy) => (
+                      <label
+                        key={policy.id}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50",
+                          selectedPolicyId === policy.id && "border-primary bg-primary/5"
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="policy"
+                          value={policy.id}
+                          checked={selectedPolicyId === policy.id}
+                          onChange={(e) => setSelectedPolicyId(e.target.value)}
+                          className="text-primary"
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{policy.title}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{policy.status.toLowerCase()}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 p-4 border-t">
+              <Button variant="outline" onClick={() => setShowPolicyModal(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleLinkPolicy} 
+                disabled={!selectedPolicyId || linkingPolicy}
+              >
+                {linkingPolicy ? "Linking..." : "Link Policy"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

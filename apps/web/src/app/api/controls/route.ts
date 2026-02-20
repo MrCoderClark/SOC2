@@ -13,14 +13,34 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { organizationId: true },
+    })
+
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: "Organization not found" }, { status: 404 })
+    }
+
     const { searchParams } = new URL(request.url)
     const category = searchParams.get("category")
     const status = searchParams.get("status")
+    const assignee = searchParams.get("assignee")
+
+    // Build assignee filter
+    let assigneeFilter = {}
+    if (assignee === "mine") {
+      assigneeFilter = { assigneeId: session.user.id }
+    } else if (assignee === "unassigned") {
+      assigneeFilter = { assigneeId: null }
+    }
 
     const controls = await prisma.control.findMany({
       where: {
+        organizationId: user.organizationId,
         ...(category && { category: category as any }),
         ...(status && { status: status as any }),
+        ...assigneeFilter,
       },
       include: {
         assignee: {

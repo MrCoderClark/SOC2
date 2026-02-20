@@ -56,15 +56,17 @@ export default function ControlsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+  const [assigneeFilter, setAssigneeFilter] = useState<"all" | "mine" | "unassigned">("all")
 
   useEffect(() => {
     fetchControls()
-  }, [categoryFilter])
+  }, [categoryFilter, assigneeFilter])
 
   const fetchControls = async () => {
     try {
       const params = new URLSearchParams()
       if (categoryFilter) params.set("category", categoryFilter)
+      if (assigneeFilter !== "all") params.set("assignee", assigneeFilter)
       
       const res = await fetch(`/api/controls?${params}`)
       const data = await res.json()
@@ -141,17 +143,43 @@ export default function ControlsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search controls..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search controls..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={assigneeFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAssigneeFilter("all")}
+            >
+              All
+            </Button>
+            <Button
+              variant={assigneeFilter === "mine" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAssigneeFilter("mine")}
+            >
+              Assigned to Me
+            </Button>
+            <Button
+              variant={assigneeFilter === "unassigned" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAssigneeFilter("unassigned")}
+            >
+              Unassigned
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground py-1">Category:</span>
           <Button
             variant={categoryFilter === null ? "default" : "outline"}
             size="sm"

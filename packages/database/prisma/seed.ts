@@ -3,115 +3,141 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 
 const soc2Controls = [
-  // CC1 - Control Environment
-  { code: "CC1.1", name: "COSO Principle 1", description: "The entity demonstrates a commitment to integrity and ethical values.", category: "SECURITY" },
-  { code: "CC1.2", name: "COSO Principle 2", description: "The board of directors demonstrates independence from management and exercises oversight.", category: "SECURITY" },
-  { code: "CC1.3", name: "COSO Principle 3", description: "Management establishes structures, reporting lines, and authorities.", category: "SECURITY" },
-  { code: "CC1.4", name: "COSO Principle 4", description: "The entity demonstrates a commitment to attract, develop, and retain competent individuals.", category: "SECURITY" },
-  { code: "CC1.5", name: "COSO Principle 5", description: "The entity holds individuals accountable for their internal control responsibilities.", category: "SECURITY" },
+  // ============================================
+  // IDENTITY & ACCESS MANAGEMENT (Your daily work!)
+  // ============================================
   
-  // CC2 - Communication and Information
-  { code: "CC2.1", name: "COSO Principle 13", description: "The entity obtains or generates and uses relevant, quality information.", category: "SECURITY" },
-  { code: "CC2.2", name: "COSO Principle 14", description: "The entity internally communicates information necessary to support internal control.", category: "SECURITY" },
-  { code: "CC2.3", name: "COSO Principle 15", description: "The entity communicates with external parties regarding internal control matters.", category: "SECURITY" },
+  // Active Directory Controls
+  { code: "IAM-AD-01", name: "AD User Provisioning", description: "New user accounts in Active Directory are created only with documented approval (ticket/email from HR or manager).", category: "SECURITY" },
+  { code: "IAM-AD-02", name: "AD User Deprovisioning", description: "User accounts are disabled within 24 hours of termination notification. Evidence: termination ticket + AD disabled timestamp.", category: "SECURITY" },
+  { code: "IAM-AD-03", name: "AD Access Review", description: "Quarterly review of Active Directory user accounts and group memberships. Remove stale/orphaned accounts.", category: "SECURITY" },
+  { code: "IAM-AD-04", name: "AD Password Policy", description: "AD password policy enforces minimum 12 characters, complexity, 90-day expiration, and lockout after 5 failed attempts.", category: "SECURITY" },
+  { code: "IAM-AD-05", name: "AD Privileged Access", description: "Domain Admin and other privileged group memberships are reviewed monthly and require documented justification.", category: "SECURITY" },
   
-  // CC3 - Risk Assessment
-  { code: "CC3.1", name: "COSO Principle 6", description: "The entity specifies objectives with sufficient clarity to enable identification of risks.", category: "SECURITY" },
-  { code: "CC3.2", name: "COSO Principle 7", description: "The entity identifies risks and analyzes how risks should be managed.", category: "SECURITY" },
-  { code: "CC3.3", name: "COSO Principle 8", description: "The entity considers the potential for fraud in assessing risks.", category: "SECURITY" },
-  { code: "CC3.4", name: "COSO Principle 9", description: "The entity identifies and assesses changes that could significantly impact internal control.", category: "SECURITY" },
+  // Microsoft 365 Controls
+  { code: "IAM-O365-01", name: "O365 User Provisioning", description: "O365 accounts are created with appropriate license assignment based on role. Evidence: provisioning ticket + license assignment.", category: "SECURITY" },
+  { code: "IAM-O365-02", name: "O365 User Deprovisioning", description: "O365 accounts are disabled and licenses reclaimed within 24 hours of termination.", category: "SECURITY" },
+  { code: "IAM-O365-03", name: "O365 MFA Enforcement", description: "Multi-factor authentication is required for all O365 users. Evidence: Conditional Access policy screenshot.", category: "SECURITY" },
+  { code: "IAM-O365-04", name: "O365 Admin Access Review", description: "Global Admin and other privileged O365 roles are reviewed quarterly.", category: "SECURITY" },
+  { code: "IAM-O365-05", name: "O365 External Sharing", description: "SharePoint/OneDrive external sharing settings are configured to organization policy. Evidence: sharing settings screenshot.", category: "CONFIDENTIALITY" },
   
-  // CC4 - Monitoring Activities
-  { code: "CC4.1", name: "COSO Principle 16", description: "The entity selects and develops ongoing and/or separate evaluations.", category: "SECURITY" },
-  { code: "CC4.2", name: "COSO Principle 17", description: "The entity evaluates and communicates internal control deficiencies.", category: "SECURITY" },
+  // Salesforce Controls
+  { code: "IAM-SF-01", name: "Salesforce User Provisioning", description: "Salesforce users are created with appropriate profile/permission set based on role. Evidence: user creation ticket.", category: "SECURITY" },
+  { code: "IAM-SF-02", name: "Salesforce User Deprovisioning", description: "Salesforce users are deactivated within 24 hours of termination. License is freed for reuse.", category: "SECURITY" },
+  { code: "IAM-SF-03", name: "Salesforce Access Review", description: "Quarterly review of Salesforce users, profiles, and permission sets. Remove unnecessary access.", category: "SECURITY" },
+  { code: "IAM-SF-04", name: "Salesforce SSO/MFA", description: "Salesforce login requires SSO through identity provider or MFA is enabled.", category: "SECURITY" },
+  { code: "IAM-SF-05", name: "Salesforce Admin Access", description: "System Administrator profile assignments are reviewed monthly and require documented justification.", category: "SECURITY" },
   
-  // CC5 - Control Activities
-  { code: "CC5.1", name: "COSO Principle 10", description: "The entity selects and develops control activities that mitigate risks.", category: "SECURITY" },
-  { code: "CC5.2", name: "COSO Principle 11", description: "The entity selects and develops general control activities over technology.", category: "SECURITY" },
-  { code: "CC5.3", name: "COSO Principle 12", description: "The entity deploys control activities through policies and procedures.", category: "SECURITY" },
+  // Intermedia Unite Controls
+  { code: "IAM-IM-01", name: "Intermedia User Provisioning", description: "New Intermedia Unite accounts are created with appropriate license and phone number assignment.", category: "SECURITY" },
+  { code: "IAM-IM-02", name: "Intermedia User Deprovisioning", description: "Intermedia accounts are disabled and licenses/phone numbers reclaimed upon termination.", category: "SECURITY" },
+  { code: "IAM-IM-03", name: "Intermedia License Management", description: "Monthly review of Intermedia licenses to ensure no unused licenses are being billed.", category: "AVAILABILITY" },
   
-  // CC6 - Logical and Physical Access Controls
-  { code: "CC6.1", name: "Logical Access Security", description: "The entity implements logical access security software and infrastructure.", category: "SECURITY" },
-  { code: "CC6.2", name: "User Registration", description: "Prior to issuing credentials, the entity registers and authorizes new users.", category: "SECURITY" },
-  { code: "CC6.3", name: "Access Removal", description: "The entity removes access to protected information when appropriate.", category: "SECURITY" },
-  { code: "CC6.4", name: "Access Review", description: "The entity restricts physical access to facilities and protected information.", category: "SECURITY" },
-  { code: "CC6.5", name: "Logical Access Disposal", description: "The entity discontinues logical and physical protections over assets only after disposal.", category: "SECURITY" },
-  { code: "CC6.6", name: "External Threats", description: "The entity implements controls to prevent or detect and act upon threats.", category: "SECURITY" },
-  { code: "CC6.7", name: "Transmission Protection", description: "The entity restricts the transmission of data to authorized channels.", category: "SECURITY" },
-  { code: "CC6.8", name: "Malicious Software", description: "The entity implements controls to prevent or detect malicious software.", category: "SECURITY" },
+  // ============================================
+  // GENERAL ACCESS CONTROLS
+  // ============================================
+  { code: "AC-01", name: "Access Request Process", description: "All access requests require documented approval before provisioning. Evidence: ticket system logs.", category: "SECURITY" },
+  { code: "AC-02", name: "Least Privilege Principle", description: "Users are granted minimum access necessary for their job function.", category: "SECURITY" },
+  { code: "AC-03", name: "Separation of Duties", description: "Critical functions require multiple people (e.g., request vs. approval).", category: "SECURITY" },
+  { code: "AC-04", name: "Unique User IDs", description: "Each user has a unique identifier. No shared accounts for individual use.", category: "SECURITY" },
+  { code: "AC-05", name: "Terminated User Access", description: "All system access is revoked within 24 hours of employee termination.", category: "SECURITY" },
   
-  // CC7 - System Operations
-  { code: "CC7.1", name: "Vulnerability Detection", description: "The entity uses detection and monitoring procedures to identify changes.", category: "SECURITY" },
-  { code: "CC7.2", name: "Incident Monitoring", description: "The entity monitors system components for anomalies and security events.", category: "SECURITY" },
-  { code: "CC7.3", name: "Incident Response", description: "The entity evaluates security events to determine whether they are incidents.", category: "SECURITY" },
-  { code: "CC7.4", name: "Incident Recovery", description: "The entity responds to identified security incidents by executing response procedures.", category: "SECURITY" },
-  { code: "CC7.5", name: "Recovery Testing", description: "The entity identifies, develops, and implements activities to recover from incidents.", category: "SECURITY" },
+  // ============================================
+  // CHANGE MANAGEMENT
+  // ============================================
+  { code: "CM-01", name: "Change Request Documentation", description: "All system changes are documented in a ticket before implementation.", category: "SECURITY" },
+  { code: "CM-02", name: "Change Approval", description: "Changes require approval from appropriate authority before implementation.", category: "SECURITY" },
+  { code: "CM-03", name: "Change Testing", description: "Changes are tested in non-production environment when possible.", category: "SECURITY" },
+  { code: "CM-04", name: "Emergency Changes", description: "Emergency changes are documented and approved retroactively within 24 hours.", category: "SECURITY" },
   
-  // CC8 - Change Management
-  { code: "CC8.1", name: "Change Management", description: "The entity authorizes, designs, develops, configures, documents, tests, approves changes.", category: "SECURITY" },
+  // ============================================
+  // INCIDENT MANAGEMENT
+  // ============================================
+  { code: "IR-01", name: "Incident Reporting", description: "Security incidents are reported and logged in ticket system.", category: "SECURITY" },
+  { code: "IR-02", name: "Incident Response", description: "Incidents are triaged and responded to based on severity.", category: "SECURITY" },
+  { code: "IR-03", name: "Incident Resolution", description: "Incidents are resolved and root cause documented.", category: "SECURITY" },
   
-  // CC9 - Risk Mitigation
-  { code: "CC9.1", name: "Risk Mitigation", description: "The entity identifies, selects, and develops risk mitigation activities.", category: "SECURITY" },
-  { code: "CC9.2", name: "Vendor Risk Management", description: "The entity assesses and manages risks associated with vendors and partners.", category: "SECURITY" },
+  // ============================================
+  // SYSTEM MONITORING
+  // ============================================
+  { code: "MON-01", name: "Login Monitoring", description: "Failed login attempts are monitored and investigated. Evidence: security logs.", category: "SECURITY" },
+  { code: "MON-02", name: "Admin Activity Logging", description: "Administrative actions are logged and retained. Evidence: audit logs.", category: "SECURITY" },
+  { code: "MON-03", name: "License Utilization", description: "Software license usage is monitored to ensure compliance and cost optimization.", category: "AVAILABILITY" },
   
-  // Availability
-  { code: "A1.1", name: "Capacity Planning", description: "The entity maintains, monitors, and evaluates current processing capacity.", category: "AVAILABILITY" },
-  { code: "A1.2", name: "Environmental Protections", description: "The entity authorizes, designs, develops, and implements environmental protections.", category: "AVAILABILITY" },
-  { code: "A1.3", name: "Recovery Procedures", description: "The entity tests recovery plan procedures supporting system recovery.", category: "AVAILABILITY" },
+  // ============================================
+  // DATA PROTECTION
+  // ============================================
+  { code: "DP-01", name: "Data Classification", description: "Data is classified based on sensitivity (Public, Internal, Confidential, Restricted).", category: "CONFIDENTIALITY" },
+  { code: "DP-02", name: "Data Encryption", description: "Sensitive data is encrypted at rest and in transit.", category: "CONFIDENTIALITY" },
+  { code: "DP-03", name: "Data Backup", description: "Critical data is backed up regularly and backups are tested.", category: "AVAILABILITY" },
+  { code: "DP-04", name: "Data Retention", description: "Data is retained according to retention policy and securely disposed when no longer needed.", category: "CONFIDENTIALITY" },
   
-  // Confidentiality
-  { code: "C1.1", name: "Confidential Information", description: "The entity identifies and maintains confidential information.", category: "CONFIDENTIALITY" },
-  { code: "C1.2", name: "Confidential Disposal", description: "The entity disposes of confidential information to meet objectives.", category: "CONFIDENTIALITY" },
+  // ============================================
+  // VENDOR MANAGEMENT
+  // ============================================
+  { code: "VM-01", name: "Vendor Security Assessment", description: "Third-party vendors handling sensitive data are assessed for security practices.", category: "SECURITY" },
+  { code: "VM-02", name: "Vendor Access Review", description: "Vendor/contractor access is reviewed quarterly and removed when no longer needed.", category: "SECURITY" },
   
-  // Processing Integrity
-  { code: "PI1.1", name: "Processing Accuracy", description: "The entity implements policies for accurate and timely processing.", category: "PROCESSING_INTEGRITY" },
-  { code: "PI1.2", name: "Input Validation", description: "The entity implements policies for complete and accurate input.", category: "PROCESSING_INTEGRITY" },
-  { code: "PI1.3", name: "Processing Validation", description: "The entity implements policies for complete and accurate processing.", category: "PROCESSING_INTEGRITY" },
-  { code: "PI1.4", name: "Output Validation", description: "The entity implements policies for complete and accurate output.", category: "PROCESSING_INTEGRITY" },
-  { code: "PI1.5", name: "Data Retention", description: "The entity implements policies for storage and retention of data.", category: "PROCESSING_INTEGRITY" },
+  // ============================================
+  // BUSINESS CONTINUITY
+  // ============================================
+  { code: "BC-01", name: "System Documentation", description: "Critical systems are documented including configuration and recovery procedures.", category: "AVAILABILITY" },
+  { code: "BC-02", name: "Backup Verification", description: "Backups are tested quarterly to ensure recoverability.", category: "AVAILABILITY" },
+  { code: "BC-03", name: "Disaster Recovery Plan", description: "DR plan exists and is tested annually.", category: "AVAILABILITY" },
   
-  // Privacy
-  { code: "P1.1", name: "Privacy Notice", description: "The entity provides notice about its privacy practices.", category: "PRIVACY" },
-  { code: "P2.1", name: "Privacy Choice", description: "The entity communicates choices available regarding data collection.", category: "PRIVACY" },
-  { code: "P3.1", name: "Privacy Collection", description: "The entity collects personal information consistent with objectives.", category: "PRIVACY" },
-  { code: "P4.1", name: "Privacy Use", description: "The entity limits the use of personal information to stated purposes.", category: "PRIVACY" },
-  { code: "P5.1", name: "Privacy Retention", description: "The entity retains personal information consistent with objectives.", category: "PRIVACY" },
-  { code: "P6.1", name: "Privacy Disposal", description: "The entity securely disposes of personal information.", category: "PRIVACY" },
-  { code: "P7.1", name: "Privacy Quality", description: "The entity collects and maintains accurate personal information.", category: "PRIVACY" },
-  { code: "P8.1", name: "Privacy Monitoring", description: "The entity monitors compliance with its privacy commitments.", category: "PRIVACY" },
+  // ============================================
+  // COMPLIANCE & AUDIT
+  // ============================================
+  { code: "AUD-01", name: "Access Certification", description: "Quarterly user access review completed and documented for all critical systems.", category: "SECURITY" },
+  { code: "AUD-02", name: "Policy Acknowledgment", description: "Users acknowledge security policies annually.", category: "SECURITY" },
+  { code: "AUD-03", name: "Audit Log Retention", description: "Audit logs are retained for minimum 1 year.", category: "SECURITY" },
 ]
 
 async function main() {
   console.log("Seeding SOC 2 controls...")
   
-  for (const control of soc2Controls) {
-    await prisma.control.upsert({
-      where: {
-        organizationId_code: {
-          organizationId: "default",
-          code: control.code,
-        },
-      },
-      update: {},
-      create: {
-        code: control.code,
-        name: control.name,
-        description: control.description,
-        category: control.category as any,
-        organization: {
-          connectOrCreate: {
-            where: { slug: "default" },
-            create: {
-              name: "Default Organization",
-              slug: "default",
-            },
-          },
-        },
-      },
-    })
+  // Clean up old controls first to avoid duplicates
+  const deleteResult = await prisma.control.deleteMany({})
+  console.log(`Deleted ${deleteResult.count} existing controls`)
+  
+  // Get all organizations
+  const organizations = await prisma.organization.findMany()
+  
+  if (organizations.length === 0) {
+    console.log("No organizations found. Please create an organization first.")
+    return
   }
   
-  console.log(`Seeded ${soc2Controls.length} SOC 2 controls`)
+  for (const org of organizations) {
+    console.log(`Seeding controls for organization: ${org.name}`)
+    
+    for (const control of soc2Controls) {
+      await prisma.control.upsert({
+        where: {
+          organizationId_code: {
+            organizationId: org.id,
+            code: control.code,
+          },
+        },
+        update: {
+          name: control.name,
+          description: control.description,
+          category: control.category as any,
+        },
+        create: {
+          code: control.code,
+          name: control.name,
+          description: control.description,
+          category: control.category as any,
+          organizationId: org.id,
+        },
+      })
+    }
+    
+    console.log(`Seeded ${soc2Controls.length} controls for ${org.name}`)
+  }
+  
+  console.log("Seeding complete!")
 }
 
 main()

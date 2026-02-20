@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,11 @@ import {
   Shield,
   Save,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  FileUp,
+  File,
+  X,
+  Pencil
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -51,12 +55,17 @@ const statusConfig = {
 export default function EvidenceDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [evidence, setEvidence] = useState<Evidence | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [fileUrl, setFileUrl] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   useEffect(() => {
     fetchEvidence()
@@ -70,10 +79,60 @@ export default function EvidenceDetailPage() {
       setEvidence(data)
       setTitle(data.title)
       setDescription(data.description || "")
+      setFileUrl(data.fileUrl)
     } catch (error) {
       console.error("Failed to fetch evidence:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+    }
+  }
+
+  const handleFileUpload = async () => {
+    if (!selectedFile) return
+    
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+      
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        setFileUrl(data.url)
+        setSelectedFile(null)
+        // Save the file URL to the evidence
+        await fetch(`/api/evidence/${params.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileUrl: data.url }),
+        })
+      } else {
+        const error = await res.json()
+        alert(error.error || "Upload failed")
+      }
+    } catch (error) {
+      console.error("Failed to upload file:", error)
+      alert("Failed to upload file")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const removeFile = () => {
+    setSelectedFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
@@ -84,17 +143,29 @@ export default function EvidenceDetailPage() {
       const res = await fetch(`/api/evidence/${params.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({ title, description, fileUrl }),
       })
       if (res.ok) {
         const updated = await res.json()
         setEvidence(updated)
+        setIsEditing(false) // Exit edit mode after save
       }
     } catch (error) {
       console.error("Failed to save evidence:", error)
     } finally {
       setSaving(false)
     }
+  }
+
+  const cancelEdit = () => {
+    // Reset to original values
+    if (evidence) {
+      setTitle(evidence.title)
+      setDescription(evidence.description || "")
+      setFileUrl(evidence.fileUrl)
+    }
+    setSelectedFile(null)
+    setIsEditing(false)
   }
 
   const updateStatus = async (newStatus: string) => {
@@ -175,26 +246,44 @@ export default function EvidenceDetailPage() {
               <FolderOpen className="h-7 w-7 text-primary" />
             </div>
             <div>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="text-2xl font-semibold border-none p-0 h-auto focus-visible:ring-0"
-                placeholder="Evidence title..."
-              />
+              {isEditing ? (
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="text-2xl font-semibold border-none p-0 h-auto focus-visible:ring-0"
+                  placeholder="Evidence title..."
+                />
+              ) : (
+                <h1 className="text-2xl font-semibold text-foreground">{evidence.title}</h1>
+              )}
               <p className="text-muted-foreground mt-1">
                 Uploaded {new Date(evidence.createdAt).toLocaleDateString()} by {evidence.uploadedBy.name}
               </p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={deleteEvidence} disabled={deleting}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              {deleting ? "Deleting..." : "Delete"}
-            </Button>
-            <Button onClick={saveEvidence} disabled={saving}>
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? "Saving..." : "Save"}
-            </Button>
+            {isEditing ? (
+              <>
+                <Button variant="outline" onClick={cancelEdit}>
+                  Cancel
+                </Button>
+                <Button onClick={saveEvidence} disabled={saving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={deleteEvidence} disabled={deleting}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {deleting ? "Deleting..." : "Delete"}
+                </Button>
+                <Button onClick={() => setIsEditing(true)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -208,25 +297,35 @@ export default function EvidenceDetailPage() {
               <CardTitle className="text-base">Review Status</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(statusConfig).map(([key, config]) => {
-                  const Icon = config.icon
-                  const isActive = evidence.status === key
-                  return (
-                    <Button
-                      key={key}
-                      variant={isActive ? "default" : "outline"}
-                      size="sm"
-                      disabled={saving}
-                      onClick={() => updateStatus(key)}
-                      className={cn(isActive && config.bg, isActive && config.color)}
-                    >
-                      <Icon className="h-4 w-4 mr-1" />
-                      {config.label}
-                    </Button>
-                  )
-                })}
-              </div>
+              {isEditing ? (
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(statusConfig).map(([key, config]) => {
+                    const Icon = config.icon
+                    const isActive = evidence.status === key
+                    return (
+                      <Button
+                        key={key}
+                        variant={isActive ? "default" : "outline"}
+                        size="sm"
+                        disabled={saving}
+                        onClick={() => updateStatus(key)}
+                        className={cn(isActive && config.bg, isActive && config.color)}
+                      >
+                        <Icon className="h-4 w-4 mr-1" />
+                        {config.label}
+                      </Button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium", statusConfig[evidence.status as keyof typeof statusConfig]?.bg, statusConfig[evidence.status as keyof typeof statusConfig]?.color)}>
+                  {(() => {
+                    const StatusIcon = statusConfig[evidence.status as keyof typeof statusConfig]?.icon || Clock
+                    return <StatusIcon className="h-4 w-4" />
+                  })()}
+                  {statusConfig[evidence.status as keyof typeof statusConfig]?.label || evidence.status}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -236,34 +335,108 @@ export default function EvidenceDetailPage() {
               <CardTitle className="text-base">Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full min-h-[200px] p-4 border rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Describe what this evidence demonstrates..."
-              />
+              {isEditing ? (
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full min-h-[200px] p-4 border rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Describe what this evidence demonstrates..."
+                />
+              ) : (
+                <div className="min-h-[100px] text-sm text-foreground whitespace-pre-wrap">
+                  {evidence.description || <span className="text-muted-foreground italic">No description provided</span>}
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* File */}
-          {evidence.fileUrl && (
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base">Attached File</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <a 
-                  href={evidence.fileUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:underline"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  View File
-                </a>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Attached File</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Show existing file (always visible) */}
+              {fileUrl && !selectedFile && (
+                <div className="flex items-center gap-3 p-3 border border-green-200 bg-green-50 rounded-lg mb-4">
+                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                  <div className="flex-1">
+                    <a 
+                      href={fileUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="font-medium text-sm text-primary hover:underline flex items-center gap-1"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      View Attached File
+                    </a>
+                  </div>
+                </div>
+              )}
+              
+              {/* No file message in view mode */}
+              {!fileUrl && !isEditing && (
+                <p className="text-sm text-muted-foreground italic">No file attached</p>
+              )}
+              
+              {/* Upload area - only in edit mode */}
+              {isEditing && (
+                <>
+                  {/* Upload new file area */}
+                  {!selectedFile && (
+                    <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                    >
+                      <FileUp className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm font-medium">{fileUrl ? "Replace file" : "Upload a file"}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        PDF, Word, Excel, Images, CSV (max 10MB)
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Selected file - ready to upload */}
+                  {selectedFile && (
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <File className="h-8 w-8 text-blue-600" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{selectedFile.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(selectedFile.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                        <Button 
+                          type="button" 
+                          size="sm" 
+                          onClick={handleFileUpload}
+                          disabled={uploading}
+                        >
+                          {uploading ? "Uploading..." : "Upload"}
+                        </Button>
+                        <button 
+                          type="button"
+                          onClick={removeFile}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.csv,.txt"
+                className="hidden"
+              />
+            </CardContent>
+          </Card>
         </div>
 
         {/* Sidebar */}
