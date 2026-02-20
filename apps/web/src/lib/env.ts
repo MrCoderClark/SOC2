@@ -1,9 +1,9 @@
-function getEnvVar(key: string, required = true): string {
+function getEnvVar(key: string): string {
   const value = process.env[key]
-  if (required && !value) {
+  if (!value) {
     throw new Error(`Missing required environment variable: ${key}`)
   }
-  return value || ""
+  return value
 }
 
 function getEnvVarOptional(key: string, defaultValue = ""): string {
@@ -25,58 +25,118 @@ function getEnvVarNumber(key: string, defaultValue: number): number {
 
 export const env = {
   // App
-  NODE_ENV: getEnvVarOptional("NODE_ENV", "development") as "development" | "production" | "test",
-  APP_URL: getEnvVarOptional("NEXTAUTH_URL", "http://localhost:3000"),
+  get NODE_ENV() {
+    return (getEnvVarOptional("NODE_ENV", "development")) as "development" | "production" | "test"
+  },
+  get APP_URL() {
+    return getEnvVarOptional("NEXTAUTH_URL", "http://localhost:3000")
+  },
   
-  // Database
-  DATABASE_URL: getEnvVar("DATABASE_URL"),
+  // Database (lazy - only throws when accessed at runtime)
+  get DATABASE_URL() {
+    return getEnvVar("DATABASE_URL")
+  },
   
-  // Auth
-  NEXTAUTH_SECRET: getEnvVar("NEXTAUTH_SECRET"),
-  NEXTAUTH_URL: getEnvVarOptional("NEXTAUTH_URL", "http://localhost:3000"),
+  // Auth (lazy - only throws when accessed at runtime)
+  get NEXTAUTH_SECRET() {
+    return getEnvVar("NEXTAUTH_SECRET")
+  },
+  get NEXTAUTH_URL() {
+    return getEnvVarOptional("NEXTAUTH_URL", "http://localhost:3000")
+  },
   
   // Google OAuth
-  GOOGLE_CLIENT_ID: getEnvVarOptional("GOOGLE_CLIENT_ID"),
-  GOOGLE_CLIENT_SECRET: getEnvVarOptional("GOOGLE_CLIENT_SECRET"),
+  get GOOGLE_CLIENT_ID() {
+    return getEnvVarOptional("GOOGLE_CLIENT_ID")
+  },
+  get GOOGLE_CLIENT_SECRET() {
+    return getEnvVarOptional("GOOGLE_CLIENT_SECRET")
+  },
   
   // GitHub OAuth
-  GITHUB_CLIENT_ID: getEnvVarOptional("GITHUB_CLIENT_ID"),
-  GITHUB_CLIENT_SECRET: getEnvVarOptional("GITHUB_CLIENT_SECRET"),
+  get GITHUB_CLIENT_ID() {
+    return getEnvVarOptional("GITHUB_CLIENT_ID")
+  },
+  get GITHUB_CLIENT_SECRET() {
+    return getEnvVarOptional("GITHUB_CLIENT_SECRET")
+  },
   
   // AWS Integration
-  AWS_ACCESS_KEY_ID: getEnvVarOptional("AWS_ACCESS_KEY_ID"),
-  AWS_SECRET_ACCESS_KEY: getEnvVarOptional("AWS_SECRET_ACCESS_KEY"),
-  AWS_REGION: getEnvVarOptional("AWS_REGION", "us-east-1"),
+  get AWS_ACCESS_KEY_ID() {
+    return getEnvVarOptional("AWS_ACCESS_KEY_ID")
+  },
+  get AWS_SECRET_ACCESS_KEY() {
+    return getEnvVarOptional("AWS_SECRET_ACCESS_KEY")
+  },
+  get AWS_REGION() {
+    return getEnvVarOptional("AWS_REGION", "us-east-1")
+  },
   
   // Slack Integration
-  SLACK_CLIENT_ID: getEnvVarOptional("SLACK_CLIENT_ID"),
-  SLACK_CLIENT_SECRET: getEnvVarOptional("SLACK_CLIENT_SECRET"),
-  SLACK_SIGNING_SECRET: getEnvVarOptional("SLACK_SIGNING_SECRET"),
+  get SLACK_CLIENT_ID() {
+    return getEnvVarOptional("SLACK_CLIENT_ID")
+  },
+  get SLACK_CLIENT_SECRET() {
+    return getEnvVarOptional("SLACK_CLIENT_SECRET")
+  },
+  get SLACK_SIGNING_SECRET() {
+    return getEnvVarOptional("SLACK_SIGNING_SECRET")
+  },
   
   // AI/OpenAI
-  OPENAI_API_KEY: getEnvVarOptional("OPENAI_API_KEY"),
-  OPENAI_ORG_ID: getEnvVarOptional("OPENAI_ORG_ID"),
+  get OPENAI_API_KEY() {
+    return getEnvVarOptional("OPENAI_API_KEY")
+  },
+  get OPENAI_ORG_ID() {
+    return getEnvVarOptional("OPENAI_ORG_ID")
+  },
   
   // Email
-  SMTP_HOST: getEnvVarOptional("SMTP_HOST"),
-  SMTP_PORT: getEnvVarNumber("SMTP_PORT", 587),
-  SMTP_USER: getEnvVarOptional("SMTP_USER"),
-  SMTP_PASSWORD: getEnvVarOptional("SMTP_PASSWORD"),
-  SMTP_FROM: getEnvVarOptional("SMTP_FROM", "noreply@example.com"),
+  get SMTP_HOST() {
+    return getEnvVarOptional("SMTP_HOST")
+  },
+  get SMTP_PORT() {
+    return getEnvVarNumber("SMTP_PORT", 587)
+  },
+  get SMTP_USER() {
+    return getEnvVarOptional("SMTP_USER")
+  },
+  get SMTP_PASSWORD() {
+    return getEnvVarOptional("SMTP_PASSWORD")
+  },
+  get SMTP_FROM() {
+    return getEnvVarOptional("SMTP_FROM", "noreply@example.com")
+  },
   
   // Feature Flags
-  ENABLE_AI_FEATURES: getEnvVarBoolean("ENABLE_AI_FEATURES", false),
-  ENABLE_SLACK_NOTIFICATIONS: getEnvVarBoolean("ENABLE_SLACK_NOTIFICATIONS", false),
-  ENABLE_EMAIL_NOTIFICATIONS: getEnvVarBoolean("ENABLE_EMAIL_NOTIFICATIONS", false),
+  get ENABLE_AI_FEATURES() {
+    return getEnvVarBoolean("ENABLE_AI_FEATURES", false)
+  },
+  get ENABLE_SLACK_NOTIFICATIONS() {
+    return getEnvVarBoolean("ENABLE_SLACK_NOTIFICATIONS", false)
+  },
+  get ENABLE_EMAIL_NOTIFICATIONS() {
+    return getEnvVarBoolean("ENABLE_EMAIL_NOTIFICATIONS", false)
+  },
   
   // Rate Limiting
-  RATE_LIMIT_MAX: getEnvVarNumber("RATE_LIMIT_MAX", 100),
-  RATE_LIMIT_WINDOW_MS: getEnvVarNumber("RATE_LIMIT_WINDOW_MS", 60000),
+  get RATE_LIMIT_MAX() {
+    return getEnvVarNumber("RATE_LIMIT_MAX", 100)
+  },
+  get RATE_LIMIT_WINDOW_MS() {
+    return getEnvVarNumber("RATE_LIMIT_WINDOW_MS", 60000)
+  },
   
   // Helpers
-  isDevelopment: () => env.NODE_ENV === "development",
-  isProduction: () => env.NODE_ENV === "production",
-  isTest: () => env.NODE_ENV === "test",
+  isDevelopment() {
+    return this.NODE_ENV === "development"
+  },
+  isProduction() {
+    return this.NODE_ENV === "production"
+  },
+  isTest() {
+    return this.NODE_ENV === "test"
+  },
 }
 
 export type Env = typeof env
