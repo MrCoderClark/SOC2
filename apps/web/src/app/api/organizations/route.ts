@@ -84,22 +84,20 @@ export async function POST(request: Request) {
       ? `${slug}-${Date.now().toString(36)}`
       : slug
 
+    // Create organization first without connecting user
     const organization = await prisma.organization.create({
       data: {
         name,
         slug: finalSlug,
-        users: {
-          connect: { id: session.user.id },
-        },
       },
     })
 
-    // Update user role to OWNER
+    // Then update user with organization and role
     await prisma.user.update({
       where: { id: session.user.id },
       data: { 
         organizationId: organization.id,
-        role: "OWNER",
+        role: "ADMIN",
       },
     })
 
