@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { FileCheck, FileText, FolderOpen, Users, Shield, Link2, TrendingUp, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import Link from "next/link"
@@ -52,8 +53,10 @@ const controlStatusColors = {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [needsOnboarding, setNeedsOnboarding] = useState(false)
 
   useEffect(() => {
     fetchStats()
@@ -65,12 +68,22 @@ export default function DashboardPage() {
       if (res.ok) {
         const data = await res.json()
         setStats(data)
+      } else if (res.status === 404) {
+        const data = await res.json()
+        if (data.error === "Organization not found") {
+          setNeedsOnboarding(true)
+        }
       }
     } catch (error) {
       console.error("Failed to fetch dashboard stats:", error)
     } finally {
       setLoading(false)
     }
+  }
+
+  if (needsOnboarding) {
+    router.push("/onboarding")
+    return null
   }
 
   if (loading) {
