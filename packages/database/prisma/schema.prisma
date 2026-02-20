@@ -261,6 +261,7 @@ enum IntegrationType {
   AZURE
   GCP
   GITHUB
+  GOOGLE_WORKSPACE
   JIRA
   SLACK
   OKTA
