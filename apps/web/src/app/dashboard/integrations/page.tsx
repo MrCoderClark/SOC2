@@ -82,6 +82,19 @@ export default function IntegrationsPage() {
       return
     }
 
+    if (type === "GOOGLE_WORKSPACE") {
+      try {
+        const res = await fetch("/api/integrations/google-workspace/connect")
+        if (res.ok) {
+          const data = await res.json()
+          window.location.href = data.url
+        }
+      } catch (error) {
+        console.error("Failed to connect Google Workspace:", error)
+      }
+      return
+    }
+
     // Handle other integrations
     const typeInfo = integrationTypes.find(t => t.type === type)
     if (!typeInfo) return
@@ -211,6 +224,13 @@ export default function IntegrationsPage() {
                       <div className="flex items-center gap-1">
                         {integration.type === "GITHUB" && integration.status === "ACTIVE" && (
                           <Link href="/dashboard/integrations/github">
+                            <Button variant="ghost" size="sm" title="View Details">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        )}
+                        {integration.type === "GOOGLE_WORKSPACE" && integration.status === "ACTIVE" && (
+                          <Link href="/dashboard/integrations/google-workspace">
                             <Button variant="ghost" size="sm" title="View Details">
                               <ExternalLink className="h-4 w-4" />
                             </Button>
