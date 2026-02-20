@@ -13,6 +13,7 @@ import {
   Users,
   Link2,
   LogOut,
+  Activity,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: "Controls", href: "/dashboard/controls", icon: FileCheck },
   { name: "Policies", href: "/dashboard/policies", icon: FileText },
   { name: "Evidence", href: "/dashboard/evidence", icon: FolderOpen },
+  { name: "Activity", href: "/dashboard/activity", icon: Activity },
   { name: "Integrations", href: "/dashboard/integrations", icon: Link2 },
   { name: "Team", href: "/dashboard/team", icon: Users },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
