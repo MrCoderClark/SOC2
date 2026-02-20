@@ -12,6 +12,8 @@ type DashboardStats = {
   controls: {
     total: number
     implemented: number
+    verified: number
+    compliant: number
     inProgress: number
     notStarted: number
     notApplicable: number
@@ -115,7 +117,7 @@ export default function DashboardPage() {
                   <TrendingUp className="h-5 w-5 text-green-600" />
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  {stats?.controls.implemented || 0} of {stats?.controls.total || 0} controls implemented
+                  {stats?.controls.compliant || 0} of {(stats?.controls.total || 0) - (stats?.controls.notApplicable || 0)} controls compliant
                 </p>
               </div>
               <div className="h-32 w-32 relative">
@@ -164,9 +166,10 @@ export default function DashboardPage() {
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold text-foreground">{stats?.controls.total || 0}</span>
                 </div>
-                <div className="flex gap-2 mt-2 text-xs">
-                  <span className="text-green-600">{stats?.controls.implemented || 0} done</span>
+                <div className="flex gap-2 mt-2 text-xs flex-wrap">
+                  <span className="text-green-600">{stats?.controls.compliant || 0} compliant</span>
                   <span className="text-yellow-600">{stats?.controls.inProgress || 0} in progress</span>
+                  <span className="text-gray-400">{stats?.controls.notStarted || 0} not started</span>
                 </div>
               </CardContent>
             </Card>

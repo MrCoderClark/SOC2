@@ -84,31 +84,35 @@ export async function GET(request: Request) {
     const totalPolicies = policyStats.reduce((sum: number, s: GroupByResult) => sum + getCount(s), 0)
     const totalEvidence = evidenceStats.reduce((sum: number, s: GroupByResult) => sum + getCount(s), 0)
 
-    const implementedControls = controlStats.find((s: GroupByResult) => s.status === "IMPLEMENTED")
-    const approvedPolicies = policyStats.find((s: GroupByResult) => s.status === "APPROVED")
-    const approvedEvidence = evidenceStats.find((s: GroupByResult) => s.status === "APPROVED")
-    
-    const implementedCount = implementedControls ? getCount(implementedControls) : 0
-    const approvedPoliciesCount = approvedPolicies ? getCount(approvedPolicies) : 0
-    const approvedEvidenceCount = approvedEvidence ? getCount(approvedEvidence) : 0
-
-    const complianceScore = totalControls > 0 
-      ? Math.round((implementedCount / totalControls) * 100) 
-      : 0
-
     const findCount = (arr: GroupByResult[], status: string) => {
       const item = arr.find((s: GroupByResult) => s.status === status)
       return item ? getCount(item) : 0
     }
+
+    const implementedCount = findCount(controlStats, "IMPLEMENTED")
+    const verifiedCount = findCount(controlStats, "VERIFIED")
+    const compliantControls = implementedCount + verifiedCount
+    const approvedPoliciesCount = findCount(policyStats, "APPROVED") + findCount(policyStats, "PUBLISHED")
+    const approvedEvidenceCount = findCount(evidenceStats, "APPROVED")
+
+    // Exclude N/A controls from compliance calculation
+    const notApplicableCount = findCount(controlStats, "NOT_APPLICABLE")
+    const applicableControls = totalControls - notApplicableCount
+    
+    const complianceScore = applicableControls > 0 
+      ? Math.round((compliantControls / applicableControls) * 100) 
+      : 0
 
     return NextResponse.json({
       complianceScore,
       controls: {
         total: totalControls,
         implemented: implementedCount,
+        verified: verifiedCount,
+        compliant: compliantControls,
         inProgress: findCount(controlStats, "IN_PROGRESS"),
         notStarted: findCount(controlStats, "NOT_STARTED"),
-        notApplicable: findCount(controlStats, "NOT_APPLICABLE"),
+        notApplicable: notApplicableCount,
       },
       policies: {
         total: totalPolicies,
